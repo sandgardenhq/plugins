@@ -1,0 +1,53 @@
+{
+  "hooks": {
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "[ -f \"${CLAUDE_PLUGIN_ROOT}/collector/stub.sh\" ] && sh \"${CLAUDE_PLUGIN_ROOT}/collector/stub.sh\" hook-stop --enrolled-only || true",
+            "commandWindows": "$r = $env:CLAUDE_PLUGIN_ROOT; if (-not $r) { $r = \"${CLAUDE_PLUGIN_ROOT}\" }; if ($r -and (Test-Path \"$r\\collector\\stub.ps1\")) { & powershell -NoProfile -NonInteractive -ExecutionPolicy Bypass -File \"$r\\collector\\stub.ps1\" hook-stop --enrolled-only }; exit 0"
+          }
+        ]
+      }
+    ],
+    "SessionEnd": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "[ -f \"${CLAUDE_PLUGIN_ROOT}/collector/stub.sh\" ] && sh \"${CLAUDE_PLUGIN_ROOT}/collector/stub.sh\" hook-stop --enrolled-only || true",
+            "commandWindows": "$r = $env:CLAUDE_PLUGIN_ROOT; if (-not $r) { $r = \"${CLAUDE_PLUGIN_ROOT}\" }; if ($r -and (Test-Path \"$r\\collector\\stub.ps1\")) { & powershell -NoProfile -NonInteractive -ExecutionPolicy Bypass -File \"$r\\collector\\stub.ps1\" hook-stop --enrolled-only }; exit 0"
+          }
+        ]
+      }
+    ],
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"${CLAUDE_PLUGIN_ROOT}/hooks/check-version.mjs\""
+          },
+          {
+            "type": "command",
+            "command": "[ -f \"${CLAUDE_PLUGIN_ROOT}/collector/stub.sh\" ] && sh \"${CLAUDE_PLUGIN_ROOT}/collector/stub.sh\" hook-session-start --enrolled-only || true",
+            "commandWindows": "$r = $env:CLAUDE_PLUGIN_ROOT; if (-not $r) { $r = \"${CLAUDE_PLUGIN_ROOT}\" }; if ($r -and (Test-Path \"$r\\collector\\stub.ps1\")) { & powershell -NoProfile -NonInteractive -ExecutionPolicy Bypass -File \"$r\\collector\\stub.ps1\" hook-session-start --enrolled-only }; exit 0"
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "[ -f \"${CLAUDE_PLUGIN_ROOT}/collector/stub.sh\" ] && sh \"${CLAUDE_PLUGIN_ROOT}/collector/stub.sh\" hook-post-tool-use --enrolled-only || true",
+            "commandWindows": "$r = $env:CLAUDE_PLUGIN_ROOT; if (-not $r) { $r = \"${CLAUDE_PLUGIN_ROOT}\" }; if ($r -and (Test-Path \"$r\\collector\\stub.ps1\")) { & powershell -NoProfile -NonInteractive -ExecutionPolicy Bypass -File \"$r\\collector\\stub.ps1\" hook-post-tool-use --enrolled-only }; exit 0"
+          }
+        ]
+      }
+    ]
+  }
+}

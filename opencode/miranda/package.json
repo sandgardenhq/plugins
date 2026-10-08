@@ -1,0 +1,18 @@
+{
+  "name": "@sandgarden/miranda",
+  "version": "0.1.75",
+  "type": "module",
+  "description": "Miranda OpenCode plugin — token-usage tracking skill + the gloria.dev MCP server's scoped /miranda tools.",
+  "main": "index.js",
+  "files": [
+    "index.js",
+    "miranda.js",
+    "skills",
+    "collector"
+  ],
+  "homepage": "https://miranda.co",
+  "license": "MIT",
+  "publishConfig": {
+    "access": "public"
+  }
+}

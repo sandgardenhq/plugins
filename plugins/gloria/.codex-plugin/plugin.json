@@ -1,0 +1,29 @@
+{
+  "name": "gloria",
+  "version": "0.3.87",
+  "description": "Discover and document a codebase's service dependencies, then register and monitor them via the gloria.dev MCP server.",
+  "author": {
+    "name": "Sandgarden, Inc.",
+    "email": "gloria@sandgarden.com"
+  },
+  "homepage": "https://gloria.dev",
+  "repository": "https://github.com/sandgardenhq/plugins",
+  "license": "MIT",
+  "keywords": [
+    "dependencies",
+    "health-checks",
+    "monitoring",
+    "observability"
+  ],
+  "skills": "./skills/",
+  "hooks": "./hooks/hooks.json",
+  "mcpServers": "./.mcp-codex.json",
+  "interface": {
+    "displayName": "gloria.dev",
+    "shortDescription": "Dependency discovery + health-check monitoring",
+    "longDescription": "Scan a codebase for its service dependencies, produce inventory + health-check docs, and register them with the gloria.dev service for continuous monitoring and alerting.",
+    "developerName": "Sandgarden, Inc.",
+    "category": "Productivity",
+    "websiteURL": "https://gloria.dev"
+  }
+}

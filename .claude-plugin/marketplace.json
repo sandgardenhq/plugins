@@ -1,0 +1,30 @@
+{
+  "name": "sandgarden",
+  "owner": {
+    "name": "Sandgarden, Inc.",
+    "email": "gloria@sandgarden.com"
+  },
+  "metadata": {
+    "description": "Sandgarden's coding-agent plugins for Claude Code — gloria.dev, Miranda, and Doc Holiday, each wired to the gloria.dev MCP server."
+  },
+  "plugins": [
+    {
+      "name": "gloria",
+      "source": "./plugins/gloria",
+      "description": "Document a codebase's service dependencies and connect to the gloria.dev MCP server for health-check registration and status.",
+      "version": "0.3.87"
+    },
+    {
+      "name": "miranda",
+      "source": "./plugins/miranda",
+      "description": "Track coding-agent token cost and attribute it to GitHub issues via Miranda, without installing the gloria plugin.",
+      "version": "0.1.75"
+    },
+    {
+      "name": "doc-holiday",
+      "source": "./plugins/doc-holiday",
+      "description": "Turn a documentation site map into ready-to-run Doc Holiday prompts, and drive Doc Holiday's documentation service via the gloria.dev MCP server.",
+      "version": "0.3.20"
+    }
+  ]
+}

@@ -1,0 +1,28 @@
+{
+  "name": "doc-holiday",
+  "version": "0.3.20",
+  "description": "Plan and generate a project's documentation with Doc Holiday: turn a site map into ready-to-run prompts and drive the Doc Holiday service via the gloria.dev MCP server.",
+  "author": {
+    "name": "Sandgarden, Inc.",
+    "email": "gloria@sandgarden.com"
+  },
+  "homepage": "https://doc.holiday",
+  "repository": "https://github.com/sandgardenhq/plugins",
+  "license": "MIT",
+  "keywords": [
+    "documentation",
+    "doc-holiday",
+    "docs",
+    "diataxis"
+  ],
+  "skills": "./skills/",
+  "mcpServers": "./.mcp-codex.json",
+  "interface": {
+    "displayName": "Doc Holiday",
+    "shortDescription": "Plan + generate docs with Doc Holiday",
+    "longDescription": "Turn a documentation site map into ready-to-run Doc Holiday prompts, and drive the Doc Holiday documentation service through the gloria.dev MCP server's doc_holiday_* tools.",
+    "developerName": "Sandgarden, Inc.",
+    "category": "Productivity",
+    "websiteURL": "https://doc.holiday"
+  }
+}

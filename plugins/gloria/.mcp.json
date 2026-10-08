@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "gloria": {
+      "type": "http",
+      "url": "https://mcp.gloria.dev/mcp"
+    }
+  }
+}

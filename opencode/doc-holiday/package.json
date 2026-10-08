@@ -1,0 +1,17 @@
+{
+  "name": "@sandgarden/doc-holiday",
+  "version": "0.3.20",
+  "type": "module",
+  "description": "Doc Holiday OpenCode plugin — documentation skills + the gloria.dev MCP server's doc_holiday_* tools.",
+  "main": "index.js",
+  "files": [
+    "index.js",
+    "doc-holiday.js",
+    "skills"
+  ],
+  "homepage": "https://doc.holiday",
+  "license": "MIT",
+  "publishConfig": {
+    "access": "public"
+  }
+}

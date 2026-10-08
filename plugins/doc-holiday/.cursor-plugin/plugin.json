@@ -1,0 +1,11 @@
+{
+  "name": "doc-holiday",
+  "version": "0.3.20",
+  "description": "Plan and generate a project's documentation with Doc Holiday: turn a site map into ready-to-run prompts and drive the Doc Holiday service via the gloria.dev MCP server.",
+  "author": {
+    "name": "Sandgarden, Inc.",
+    "email": "gloria@sandgarden.com"
+  },
+  "homepage": "https://doc.holiday",
+  "mcpServers": "./.mcp-cursor.json"
+}
