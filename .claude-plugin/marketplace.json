@@ -12,13 +12,13 @@
       "name": "gloria",
       "source": "./plugins/gloria",
       "description": "Document a codebase's service dependencies and connect to the gloria.dev MCP server for health-check registration and status.",
-      "version": "0.3.88"
+      "version": "0.3.89"
     },
     {
       "name": "miranda",
       "source": "./plugins/miranda",
       "description": "Track coding-agent token cost and attribute it to GitHub issues via Miranda, without installing the gloria plugin.",
-      "version": "0.1.76"
+      "version": "0.1.77"
     },
     {
       "name": "doc-holiday",
