@@ -44,11 +44,11 @@
 # placeholder appears exactly once so the workflow's sed + grep verification
 # can't miss. Only windows-x64 is carried: it is the only asset this file can
 # ever resolve.
-$BuildVersion = 'a1f67fd00034'
-$ReleaseTag = 'collector-a1f67fd00034'
+$BuildVersion = '81ca1fa7a45e'
+$ReleaseTag = 'collector-81ca1fa7a45e'
 $ReleaseRepo = 'sandgardenhq/plugins'
 $AssetPrefix = 'miranda-collector'
-$ChecksumWindowsX64 = '79acbbcdacf1c5f547015dd3ab58366acd8b99c195b5911520e49ca28967d369'
+$ChecksumWindowsX64 = '24bda878b843b6fa7dbf2784fde4947c26191ccff71d1569f9293a2766ec5f46'
 
 # What `hook-session-start` tells the agent when no collector could be handed
 # to it (#1568) — the PowerShell twin of stub.sh's NOT_INSTALLED_NUDGE, and a
