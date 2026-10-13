@@ -2,7 +2,7 @@
 // Stamped at publish time by .github/workflows/publish-marketplace.yml — the
 // source tree always reads "DEV"; the published copy carries the real
 // version, exactly like USING-GLORIA.md's gloria-doc-version stamp.
-export const INSTALLED_VERSION = "0.3.89"
+export const INSTALLED_VERSION = "0.3.90"
 
 export const LATEST_VERSION_URL = "https://gloria.dev/api/plugin-version"
 
