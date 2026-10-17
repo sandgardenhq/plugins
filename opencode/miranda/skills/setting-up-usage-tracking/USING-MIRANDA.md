@@ -13,7 +13,8 @@ Miranda is available two ways, and both apply to you:
   `get_my_effectiveness`, `get_my_workflow`, `get_my_tracking_status`,
   `assign_my_session_work_item`, the managers-only `get_team_effectiveness`,
   plus the shared
-  `get_info`/`register_project`/`put_project_github_info` — the same rows the
+  `get_info`/`list_projects`/`register_project`/`put_project_github_info` —
+  the same rows the
   `gloria` server exposes, since Miranda and gloria share one database).
 - **The usage-collector hooks** installed with the Miranda plugin (Claude
   Code, Codex, OpenCode) — they run automatically once the collector's
@@ -120,6 +121,28 @@ flight. The collector's `gloria-usage session` subcommand will answer that
 locally, with no round-trip, once it ships; until then, say the current
 session's cost isn't available yet rather than estimating it.
 
+## When this repository isn't a project
+
+Miranda attributes a session to a project only when the session's `origin`
+remote matches a registered project's `repoUrl`; everything else lands in
+**Unassigned**, where no per-project or per-issue figure can see it. So when a
+Miranda tool result shows this repository isn't a project — `list_projects`
+has no project whose `repoUrl` matches this repository's `origin`, or
+`get_my_tracking_status` or `get_my_spend` puts this repository's sessions in
+Unassigned — register it, **without asking**. Registering is part of tracking
+this repository, which the team has already adopted.
+
+Follow the `setting-up-usage-tracking` skill's "Register this repository as a
+project" step: read `origin` with
+`git remote get-url origin | sed -E 's#://[^/@]*@#://#'` (the `sed` keeps a
+token embedded in the remote out of the transcript), normalize it (SSH forms
+to `https://`, no userinfo, no `.git` or trailing `/`), compare it against
+every project's `repoUrl` normalized the same way, and when nothing matches, call `register_project` with the repository's name
+and a slug no existing project has. Then tell the user the slug and what the
+result's `backfill` moved out of Unassigned (sessions, dollars, earliest
+session). Spend older than 80 days stays in Unassigned. No `origin` remote
+means nothing to match — say so and move on.
+
 ## Setting up usage tracking
 
 The Miranda plugin ships hooks (Claude Code, Codex, OpenCode) that transmit
@@ -138,8 +161,13 @@ Reads need `inventory:read` (any member); writes need `inventory:write`.
 
 - `get_info` — org id/name/slug. Cheap; call it first when you need org
   context or to check the `miranda` MCP server is reachable.
+- `list_projects` — every project in the org, with its `repoUrl`. How you
+  tell whether this repository is a project yet.
 - `register_project`, `put_project_github_info` — register this repo as a
-  gloria.dev/Miranda project (the same rows either server writes).
+  gloria.dev/Miranda project (the same rows either server writes). Upserts by
+  slug, so never send a slug another project already has. When it gives a
+  project a `repoUrl`, its `backfill` reports the repository's earlier
+  Unassigned spend that moved onto it.
 - `tag_session_work_item` — declare the GitHub issue this session is working
   on (bare issue number, `gh:482`, or a full issue URL). Session-local — it
   writes only to this session's own transcript, never the database — the

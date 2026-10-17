@@ -1,6 +1,6 @@
 ---
 name: setting-up-usage-tracking
-description: Use when installing the Miranda plugin into a repo ("set up token tracking", "enable usage tracking", "install miranda"), when a repo is missing .miranda/USING-MIRANDA.md or the miranda section in CLAUDE.md/AGENTS.md, or after a Miranda plugin update to refresh a stale doc — copies the canonical USING-MIRANDA.md agent doc into the repo, wires an evergreen Miranda section into the agent instruction files (with the user's permission), and enrols this machine for usage collection. Idempotent; safe to re-run.
+description: Use when installing the Miranda plugin into a repo ("set up token tracking", "enable usage tracking", "install miranda"), when a repo is missing .miranda/USING-MIRANDA.md or the miranda section in CLAUDE.md/AGENTS.md, or after a Miranda plugin update to refresh a stale doc — copies the canonical USING-MIRANDA.md agent doc into the repo, wires an evergreen Miranda section into the agent instruction files (with the user's permission), enrols this machine for usage collection, and registers the current repository as a Miranda project if it isn't one. Idempotent; safe to re-run.
 ---
 
 # Setting Up Usage Tracking
@@ -20,10 +20,14 @@ gets collected. Two files carry that:
    releases; only the doc does.
 
 Then, once those are wired, enrol this machine so the collector daemon the
-Miranda plugin installs actually starts reporting usage.
+Miranda plugin installs actually starts reporting usage, and make sure this
+repository is a Miranda project — the collector attributes a session to a
+project only when the session's `origin` remote matches one, so an
+unregistered repository's spend all lands in **Unassigned**.
 
 Never modify the user's files without showing them exactly what will change
-and getting a yes first.
+and getting a yes first. Registering the repository writes no file, and is
+done without asking (step 6).
 
 ## What the collector reports
 
@@ -121,7 +125,7 @@ commitment the team has made, not a suggestion.
     → the deprecated `GLORIA_HOME` → `$XDG_CONFIG_HOME/sandgarden` →
     `~/.config/sandgarden`). `daemon status` always exits 0, so "not
     enrolled" is not an error. Treat this as extra detail for the report in
-    step 6, not as the enrolment test — the `config.json` check above is the
+    step 7, not as the enrolment test — the `config.json` check above is the
     one that has to work on every machine.
 
 ### 2. Propose and ask permission — once
@@ -137,7 +141,9 @@ yes/no. Cover only the actions actually needed, e.g.:
 - enrol this machine for usage tracking, if it is not already, saying what
   the collector reports (see "What the collector reports").
 
-If everything is already current, say so and skip to step 6. If the user
+If everything is already current, say so and skip to step 6.
+Registering the repository is not part of this yes/no — step 6 does it
+without asking. If the user
 declines the file edits, stop — do not partially apply.
 
 ### 3. Write the doc
@@ -272,15 +278,98 @@ this machine's local session stores whether or not any agent plugin fires, so
 no further wiring is needed. See `USING-MIRANDA.md`'s "Codex, OpenCode, and
 Cursor" section for per-agent notes.
 
-### 6. Report
+### 6. Register this repository as a project
+
+Run this after step 5, whichever enrolment path ran — and also when steps 2–5
+had nothing to do. Do it **without asking**: the developer is setting up
+tracking for exactly this repository, and registering it is the only way its
+spend stops landing in Unassigned. Use the `miranda` MCP tools only.
+
+1. **Read the remote.** At the repo root (`git rev-parse --show-toplevel`),
+   run:
+
+   ```sh
+   git remote get-url origin | sed -E 's#://[^/@]*@#://#'
+   ```
+
+   The `sed` drops any userinfo (`user:token@`) before the URL is printed: an
+   `https` remote can carry a credential, and it must never reach the
+   transcript, a tool argument or the report. Use `origin` and nothing else —
+   it is the only remote the collector reads. If this isn't a git repository,
+   or the command prints nothing on stdout (no `origin` remote — git's
+   `error: No such remote` goes to stderr), skip the rest of step 6 and say
+   why in the report (e.g. "this repository has no `origin` remote, so there
+   is no URL a project could match").
+
+2. **Normalize it** the way the server does, so the comparison means what
+   ingest means:
+   - scp-like SSH, `git@host:owner/repo.git` → `https://host/owner/repo`;
+   - `ssh://`, `git://` and `git+ssh://` URLs → `https://` on the same host
+     (port included) and path; `http://` and `https://` keep their scheme;
+   - drop any userinfo left, then a trailing `.git` (and any `/` after it),
+     then any trailing `/`.
+
+   Change nothing else — not even letter case.
+
+3. **Look for a match.** Call `list_projects`, normalize each project's
+   `repoUrl` the same way (older rows can carry a trailing `/` or `.git`), and
+   compare exactly, case-sensitive — ingest matches the same way, so a
+   case-only difference is not a match. If a project matches, name the
+   existing project — its name and slug (all of them, if more than one
+   matches) — say spend from this repository is already attributed to it, and
+   register nothing.
+
+4. **Register when nothing matches.** Call `register_project` with
+   `{ "project": { "slug": …, "name": …, "repoUrl": <normalized URL> } }`:
+   - `name` — the repository name: the last path segment of the normalized
+     URL (`https://github.com/sandgardenhq/gloria.dev` → `gloria.dev`);
+   - `slug` — that name lowercased, every run of characters outside `a-z0-9`
+     replaced by `-`, leading and trailing `-` trimmed (`gloria-dev`).
+
+   `register_project` **upserts by slug**: sending a slug some other project
+   already has overwrites that project's name and repository. So if
+   `list_projects` already has the slug — whatever its `repoUrl`, set or not —
+   or the slug came out empty, use `<owner>-<repo>` built the same way
+   (`sandgardenhq-gloria-dev`). `<owner>` is the path segment before the
+   repository name (for `https://gitlab.com/group/sub/repo`, `sub`). If that is
+   taken too, append a number to it — `<owner>-<repo>-2`, `-3`, … — until it
+   is free. Slugs can't be changed later, so never guess past this rule.
+
+5. **Report what happened** in step 7, from the result's `project` and
+   `backfill`:
+   - the `slug` it registered under (and the name, when it isn't the same as
+     the slug);
+   - `backfill.status` `"ran"` with `sessionCount` above 0 — that many earlier
+     sessions moved from Unassigned onto the project, worth `spendMicros` ÷
+     1,000,000 dollars (round to cents), the earliest from `earliestSessionAt`
+     (Unix seconds; show it as a date). When `unpriced` is true, some of that
+     spend has no price yet, so the dollar figure is a lower bound — say so;
+   - `"ran"` with `sessionCount` 0 — there was no earlier Unassigned spend
+     from this repository to move;
+   - `"failed"` — the project is saved, but its earlier spend didn't move;
+     sessions from now on are attributed to it;
+   - `"skipped"` — nothing moved;
+   - in every case, spend from more than 80 days before today stays in
+     Unassigned.
+
+If `list_projects` or `register_project` fails with a transient error (a
+dropped connection, a timeout), retry it once. If it still fails, or the
+`miranda` MCP server isn't connected, or the call returns an error — say so,
+with the error, and carry on to the report. It doesn't undo the file edits or the enrolment.
+
+### 7. Report
 
 Summarize what changed (files created/updated, section inserted where,
-usage tracking configured or already present) and suggest committing the
-changes, e.g. `chore: wire miranda agent doc into instruction files`.
+usage tracking configured or already present, the project registered or
+matched — or why the step was skipped — with what step 6 moved) and suggest
+committing the changes, e.g. `chore: wire miranda agent doc into instruction
+files`.
 
 ## Idempotency rules
 
 - Re-running with identical content is a no-op; say "already current".
+- Re-running in a repository that is already a project registers nothing:
+  step 6 finds the match and names it.
 - Marker blocks are always replaced in place, never duplicated. If a file
   somehow contains multiple marker blocks, replace the first and remove the
   rest, and mention it.
