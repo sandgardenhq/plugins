@@ -189,7 +189,7 @@ There is nothing to install: the first hook fire downloads a compiled collector 
 - `model_request`: the token counts already reported today
 - `tool_call`: tool name, argument names, repo-relative file path, and a shell command's first word only, plus the names of any wrappers a hook added to it before it ran (such as `rtk`)
 - `tool_result`: error flag, size, exit code and test counts, never the output
-- `project_facts`: manifest and instruction file names, sizes and hashes
+- `project_facts`: manifest and instruction file names, sizes and hashes, and the MCP server names the repo's agent config files declare
 - `skill_invoked`: skill name and whether it came from a plugin, the project, or the user
 - `subagent_spawned`: subagent type, model override and whether it ran in the background, never its prompt
 - `plan_mode`: entering or leaving plan mode, never the plan
@@ -197,6 +197,7 @@ There is nothing to install: the first hook fire downloads a compiled collector 
 - `vcs_event`: commit, push, PR create or merge, or rebase, with PR and issue numbers only, never a branch, message or remote
 - `hook_fired`: hook name, the first word of the hook's own command (such as `rtk`), and whether it blocked, never its arguments or output
 - `mcp_tool_call`: MCP server and tool name, never arguments or results
+- `machine_facts`: the MCP server names the session's agent has configured on the machine, and whether each is on, never their commands, URLs, headers or env
 
 **The hooks are inert until you configure them.** With no config present they exit 0 immediately (never interrupting your session) and log a one-line setup hint to `collector.log` in the state directory. Nothing is collected or sent. To configure them, run `setting-up-usage-tracking` (Miranda) or `setting-up-gloria` (gloria) — either calls the `enable_usage_tracking` tool, which mints a write-only usage-ingest key for your org, and writes it to `$XDG_CONFIG_HOME/sandgarden/config.json` (`~/.config/sandgarden/config.json` when `XDG_CONFIG_HOME` is unset):
 

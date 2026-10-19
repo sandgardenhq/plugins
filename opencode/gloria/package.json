@@ -1,6 +1,6 @@
 {
   "name": "@sandgarden/gloria",
-  "version": "0.3.94",
+  "version": "0.3.97",
   "type": "module",
   "description": "gloria.dev OpenCode plugin — dependency-discovery skills + the gloria.dev MCP server.",
   "main": "index.js",
