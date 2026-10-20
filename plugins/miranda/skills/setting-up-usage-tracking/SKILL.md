@@ -22,7 +22,7 @@ gets collected. Two files carry that:
 Then, once those are wired, enrol this machine so the collector daemon the
 Miranda plugin installs actually starts reporting usage, and make sure this
 repository is a Miranda project — the collector attributes a session to a
-project only when the session's `origin` remote matches one, so an
+project only when the session's `origin` remote matches one of a project's repositories, so an
 unregistered repository's spend all lands in **Unassigned**.
 
 Never modify the user's files without showing them exactly what will change
@@ -312,16 +312,19 @@ spend stops landing in Unassigned. Use the `miranda` MCP tools only.
 
    Change nothing else — not even letter case.
 
-3. **Look for a match.** Call `list_projects`, normalize each project's
-   `repoUrl` the same way (older rows can carry a trailing `/` or `.git`), and
-   compare exactly, case-sensitive — ingest matches the same way, so a
-   case-only difference is not a match. If a project matches, name the
-   existing project — its name and slug (all of them, if more than one
-   matches) — say spend from this repository is already attributed to it, and
-   register nothing.
+3. **Look for a match.** A project owns a set of repositories. Call
+   `list_projects`, normalize every URL in each project's `repoUrls` (the
+   project's repositories, its primary first) the same way (older rows can
+   carry a trailing `/` or `.git`), and compare exactly, case-sensitive —
+   ingest matches the same way, so a case-only difference is not a match.
+   Compare against all of them, not just the primary `repoUrl`: a repository
+   attached to a project is that project's as much as its primary is. If a
+   project matches, name the existing project — its name and slug (all of
+   them, if more than one matches) — say spend from this repository is
+   already attributed to it, and register nothing.
 
 4. **Register when nothing matches.** Call `register_project` with
-   `{ "project": { "slug": …, "name": …, "repoUrl": <normalized URL> } }`:
+   `{ "project": { "slug": …, "name": …, "repoUrls": [<normalized URL>] } }`:
    - `name` — the repository name: the last path segment of the normalized
      URL (`https://github.com/sandgardenhq/gloria.dev` → `gloria.dev`);
    - `slug` — that name lowercased, every run of characters outside `a-z0-9`
@@ -329,12 +332,22 @@ spend stops landing in Unassigned. Use the `miranda` MCP tools only.
 
    `register_project` **upserts by slug**: sending a slug some other project
    already has overwrites that project's name and repository. So if
-   `list_projects` already has the slug — whatever its `repoUrl`, set or not —
+   `list_projects` already has the slug — whatever its `repoUrls`, set or not —
    or the slug came out empty, use `<owner>-<repo>` built the same way
    (`sandgardenhq-gloria-dev`). `<owner>` is the path segment before the
    repository name (for `https://gitlab.com/group/sub/repo`, `sub`). If that is
    taken too, append a number to it — `<owner>-<repo>-2`, `-3`, … — until it
    is free. Slugs can't be changed later, so never guess past this rule.
+
+   If the result's `status` is `"held_by"`, another project already holds
+   this repository (it was attached after your `list_projects` call, or the
+   comparison missed it): nothing was created. Name that project from
+   `heldBy` (its slug and name), say this repository's spend is already
+   attributed to it, and register nothing more.
+
+   Registering never attaches: you can't tell from the code whether two
+   repositories are one product, and attaching moves spend between projects.
+   Never call `attach_project_repository` yourself.
 
 5. **Report what happened** in step 7, from the result's `project` and
    `backfill`:
@@ -352,6 +365,18 @@ spend stops landing in Unassigned. Use the `miranda` MCP tools only.
    - `"skipped"` — nothing moved;
    - in every case, spend from more than 80 days before today stays in
      Unassigned.
+
+6. **Say how to attach instead.** After registering, tell the user that if
+   this repository is part of an existing product rather than a product of
+   its own, an org admin (`settings:manage`) can attach it to that product's
+   project: on the new project's page in Miranda, **Merge into…** that
+   project, which attaches this repository to it and moves the spend that
+   just moved here along with it. (`attach_project_repository` attaches a
+   repository no active project holds, so it won't take this one while the
+   new project does — it's how an admin adds a repository that isn't
+   registered yet.) Name the org's other projects from `list_projects` (name
+   and slug; the first ten and how many more, if there are more than ten) so
+   they can pick one. Skip this when the org had no other project.
 
 If `list_projects` or `register_project` fails with a transient error (a
 dropped connection, a timeout), retry it once. If it still fails, or the

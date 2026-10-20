@@ -16,7 +16,7 @@ const collectorStubPath = path.resolve(__dirname, "collector/stub.sh")
 
 // Stamped at publish time by scripts/publish-marketplace/stage.mjs — the
 // source tree always reads "DEV", exactly like check-plugin-version's hook.
-const INSTALLED_VERSION = "0.3.97"
+const INSTALLED_VERSION = "0.3.98"
 const LATEST_VERSION_URL = "https://gloria.dev/api/plugin-version"
 
 // Local, dependency-free comparison for this repo's simple `x.y.z` versions
