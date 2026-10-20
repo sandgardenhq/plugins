@@ -321,14 +321,29 @@ spend stops landing in Unassigned. Use the `miranda` MCP tools only.
    attached to a project is that project's as much as its primary is. If a
    project matches, name the existing project — its name and slug (all of
    them, if more than one matches) — say spend from this repository is
-   already attributed to it, and register nothing.
+   already attributed to it, and register nothing. Never overwrite an existing
+   description, even a blank or weak one: a person may have written it, and
+   they can edit it on the project's page.
 
 4. **Register when nothing matches.** Call `register_project` with
-   `{ "project": { "slug": …, "name": …, "repoUrls": [<normalized URL>] } }`:
+   `{ "project": { "slug": …, "name": …, "description": …, "repoUrls": [<normalized URL>] } }`:
    - `name` — the repository name: the last path segment of the normalized
      URL (`https://github.com/sandgardenhq/gloria.dev` → `gloria.dev`);
    - `slug` — that name lowercased, every run of characters outside `a-z0-9`
-     replaced by `-`, leading and trailing `-` trimmed (`gloria-dev`).
+     replaced by `-`, leading and trailing `-` trimmed (`gloria-dev`);
+   - `description` — one or two plain sentences, at most about 300
+     characters, saying what this project is and what it does, written from
+     what you can read at the repo root: the README first, then the manifest's
+     own description (`package.json`, `pyproject.toml`, `Cargo.toml`, `go.mod`
+     and the like), the agent instruction file, and the top-level layout. Be
+     specific: say who or what it serves and the main things it does, e.g.
+     "Next.js dashboard and Cloudflare Workers API that monitors a team's
+     third-party service dependencies and alerts on outages." Not the
+     project's name or its URL restated, no boilerplate ("A software
+     project", "This repository contains code"), no markdown. Never claim a
+     capability, user or integration the files don't show. If they show too
+     little to say anything concrete, omit `description` rather than guess.
+     The developer can edit it on the project's page afterwards.
 
    `register_project` **upserts by slug**: sending a slug some other project
    already has overwrites that project's name and repository. So if
@@ -353,6 +368,8 @@ spend stops landing in Unassigned. Use the `miranda` MCP tools only.
    `backfill`:
    - the `slug` it registered under (and the name, when it isn't the same as
      the slug);
+   - the description it saved, quoted, so the developer can correct it on the
+     project's page — or that you sent none, and why;
    - `backfill.status` `"ran"` with `sessionCount` above 0 — that many earlier
      sessions moved from Unassigned onto the project, worth `spendMicros` ÷
      1,000,000 dollars (round to cents), the earliest from `earliestSessionAt`
