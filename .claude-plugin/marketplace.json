@@ -5,7 +5,7 @@
     "email": "gloria@sandgarden.com"
   },
   "metadata": {
-    "description": "Sandgarden's coding-agent plugins for Claude Code — gloria.dev, Miranda, and Doc Holiday, each wired to the gloria.dev MCP server."
+    "description": "Sandgarden's coding-agent plugins for Claude Code — gloria.dev, Miranda, Doc Holiday and Featurette."
   },
   "plugins": [
     {
@@ -25,6 +25,12 @@
       "source": "./plugins/doc-holiday",
       "description": "Turn a documentation site map into ready-to-run Doc Holiday prompts, and drive Doc Holiday's documentation service via the gloria.dev MCP server.",
       "version": "0.3.20"
+    },
+    {
+      "name": "featurette",
+      "source": "./plugins/featurette",
+      "description": "Turn your website into videos of any kind (onboarding, support, product release, outreach), steer the director, and personalize per recipient through Featurette's MCP server.",
+      "version": "0.1.0"
     }
   ]
 }

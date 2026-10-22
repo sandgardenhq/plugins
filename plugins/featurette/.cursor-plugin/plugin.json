@@ -1,0 +1,11 @@
+{
+  "name": "featurette",
+  "version": "0.1.0",
+  "description": "Turn your website into videos of any kind (onboarding, support, product release, outreach), steer the director, and personalize per recipient through Featurette's MCP server.",
+  "author": {
+    "name": "Sandgarden, Inc.",
+    "email": "gloria@sandgarden.com"
+  },
+  "homepage": "https://featurette.ai",
+  "mcpServers": "./.mcp-cursor.json"
+}
