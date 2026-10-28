@@ -1,6 +1,6 @@
 ---
 name: setting-up-usage-tracking
-description: Use when installing the Miranda plugin into a repo ("set up token tracking", "enable usage tracking", "install miranda"), when a repo is missing .miranda/USING-MIRANDA.md or the miranda section in CLAUDE.md/AGENTS.md, or after a Miranda plugin update to refresh a stale doc — copies the canonical USING-MIRANDA.md agent doc into the repo, wires an evergreen Miranda section into the agent instruction files (with the user's permission), enrols this machine for usage collection, and registers the current repository as a Miranda project if it isn't one. Idempotent; safe to re-run.
+description: Use when installing the Miranda plugin into a repo ("set up token tracking", "enable usage tracking", "install miranda"), when a repo is missing .miranda/USING-MIRANDA.md or the miranda section in CLAUDE.md/AGENTS.md, or after a Miranda plugin update to refresh a stale doc — copies the canonical USING-MIRANDA.md agent doc into the repo, wires an evergreen Miranda section into the agent instruction files (with the user's permission), enrols this machine for usage collection, writes Miranda's identifying headers into the config of any coding agent routed through an AI gateway, and registers the current repository as a Miranda project if it isn't one. Idempotent; safe to re-run.
 ---
 
 # Setting Up Usage Tracking
@@ -25,9 +25,15 @@ repository is a Miranda project — the collector attributes a session to a
 project only when the session's `origin` remote matches one of a project's repositories, so an
 unregistered repository's spend all lands in **Unassigned**.
 
+If a coding agent here sends its requests through an AI gateway (LiteLLM,
+Cloudflare AI Gateway, Bifrost, or an OTLP exporter), Miranda can also import
+its usage from the gateway. For that, each request has to say which machine
+and project it came from, so the skill writes those two values (the
+**carrier**) into that agent's own config (step 6).
+
 Never modify the user's files without showing them exactly what will change
 and getting a yes first. Registering the repository writes no file, and is
-done without asking (step 6).
+done without asking (step 7).
 
 ## What the collector reports
 
@@ -126,8 +132,31 @@ commitment the team has made, not a suggestion.
     → the deprecated `GLORIA_HOME` → `$XDG_CONFIG_HOME/sandgarden` →
     `~/.config/sandgarden`). `daemon status` always exits 0, so "not
     enrolled" is not an error. Treat this as extra detail for the report in
-    step 7, not as the enrolment test — the `config.json` check above is the
+    step 8, not as the enrolment test — the `config.json` check above is the
     one that has to work on every machine.
+
+  - **Is any agent routed through an AI gateway?** Read only; change
+    nothing. Look for a base URL each agent is pointed at:
+    - Claude Code: `ANTHROPIC_BASE_URL` in the shell environment, or in the
+      `env` block of `~/.claude/settings.json`, `.claude/settings.json` or
+      `.claude/settings.local.json`.
+    - Codex: the top-level `model_provider` in `$CODEX_HOME/config.toml`
+      (default `~/.codex/config.toml`), naming a custom
+      `[model_providers.<id>]` block with a `base_url`.
+    - OpenCode: a provider with `options.baseURL` in the repo's
+      `opencode.json` or in `~/.config/opencode/opencode.json`.
+
+    For each base URL found, ask the script which gateway it is:
+
+    ```sh
+    node <skill-dir>/scripts/write-gateway-carriers.mjs gateway-for <base-url>
+    ```
+
+    `<skill-dir>` is this skill's base directory. It prints
+    `{ "gateway": … }`: `cloudflare-ai-gateway` or `openrouter` when the host
+    says so, otherwise `null`, and then you ask (step 2). An agent with no
+    base URL talks to its provider directly and needs nothing here. Never
+    print an API key or token you see while reading these files.
 
 ### 2. Propose and ask permission — once
 
@@ -140,10 +169,17 @@ yes/no. Cover only the actions actually needed, e.g.:
 - create `AGENTS.md` containing the section, when neither instruction file
   exists;
 - enrol this machine for usage tracking, if it is not already, saying what
-  the collector reports (see "What the collector reports").
+  the collector reports (see "What the collector reports");
+- for each gateway-routed agent from step 1, write Miranda's carrier into
+  that agent's config file (step 6 names the file per agent). When the
+  gateway wasn't inferred, ask which one it is in the same message:
+  LiteLLM (`litellm`), Cloudflare AI Gateway (`cloudflare-ai-gateway`),
+  Bifrost (`bifrost`), an OTLP exporter (`otlp`), or OpenRouter
+  (`openrouter`). Miranda imports from no other gateway yet, so for any other
+  answer say so and leave that agent alone.
 
-If everything is already current, say so and skip to step 6.
-Registering the repository is not part of this yes/no — step 6 does it
+If everything is already current, say so and skip to step 7.
+Registering the repository is not part of this yes/no — step 7 does it
 without asking. If the user
 declines the file edits, stop — do not partially apply.
 
@@ -199,8 +235,22 @@ the same `config.json` — never do two of them.
 
 #### Fallback: minting the credential through MCP
 
-1. Call the `miranda` MCP tool **`enable_usage_tracking`**, always passing a
-   `machineLabel` — never omit it. Clerk key names must be unique per org,
+1. Read this machine's id first. It is the collector's own enrolment id, and
+   the command creates it, in the collector's format, if the machine has
+   none yet:
+
+   ```sh
+   node <skill-dir>/scripts/write-gateway-carriers.mjs machine-id
+   ```
+
+   It prints `{ "machineId": …, "source": …, "file": … }`. The id is not a
+   secret.
+
+   Call the `miranda` MCP tool **`enable_usage_tracking`**, passing that
+   `machineId` and always passing a `machineLabel` — never omit either.
+   `machineId` links this machine to you on the server, which is what lets
+   a gateway request carrying it count as yours even before the collector
+   reports anything. Clerk key names must be unique per org,
    and omitting `machineLabel` falls back to a non-unique default name, so a
    second machine (or a re-run after a partial failure) collides with an
    already-minted key and the call fails with a Clerk `409 token_creation_conflict`.
@@ -210,6 +260,7 @@ the same `config.json` — never do two of them.
    one, keep it unique the same way (append a short suffix) rather than
    passing their label bare. It mints a write-only, org-scoped Clerk API key
    and returns `{ apiBaseUrl, ingestToken }` plus write instructions.
+
 2. Write `$XDG_CONFIG_HOME/sandgarden/config.json` — `~/.config/sandgarden/config.json`
    when `XDG_CONFIG_HOME` is unset — directly from the tool result, merging
    with any existing keys in the file. The directory is per-machine, not
@@ -279,9 +330,69 @@ this machine's local session stores whether or not any agent plugin fires, so
 no further wiring is needed. See `USING-MIRANDA.md`'s "Codex, OpenCode, and
 Cursor" section for per-agent notes.
 
-### 6. Register this repository as a project
+### 6. Write the gateway carriers
 
-Run this after step 5, whichever enrolment path ran — and also when steps 2–5
+Only for the agents step 1 found routed through a gateway, and only after
+the user said yes in step 2. For each one, run:
+
+```sh
+node <skill-dir>/scripts/write-gateway-carriers.mjs write --agent <claude-code|codex|opencode> --gateway <gateway> --repo <repo-root>
+```
+
+Add `--provider <id>` for Codex or OpenCode when step 1 found the provider
+id and the script would otherwise have to guess.
+
+The script uses this machine's id (creating it as the `machine-id` command
+does) and the repository's `origin` URL, normalized, and writes the carrier
+the gateway records:
+
+| Gateway                 | What the agent will send                                                             |
+| ----------------------- | ------------------------------------------------------------------------------------ |
+| `litellm`               | Headers `Miranda-Machine` and `Miranda-Project`                                      |
+| `cloudflare-ai-gateway` | One `cf-aig-metadata` header: `miranda_machine`, `miranda_project`, `miranda_agent`  |
+| `bifrost`               | Headers `x-bf-lh-miranda-machine` and `x-bf-lh-miranda-project`                      |
+| `otlp`                  | `OTEL_RESOURCE_ATTRIBUTES`: `miranda.machine.id`, `miranda.project`, `miranda.agent` |
+| `openrouter`            | Nothing: OpenRouter has no carrier                                                   |
+
+into one place per agent, merged with any headers the agent already sends:
+
+- **Claude Code:** `env.ANTHROPIC_CUSTOM_HEADERS` in the repo's
+  `.claude/settings.local.json` (per user, per project, not committed).
+  Never the committed `.claude/settings.json`. Tell the user it needs Claude
+  Code v2.1.227 or later (`claude --version`), and takes effect once they
+  trust the folder. For `otlp` the script writes `OTEL_RESOURCE_ATTRIBUTES`
+  in the same `env` block.
+- **Codex:** `http_headers` on the active custom `[model_providers.<id>]`
+  block in `$CODEX_HOME/config.toml`. Codex reads providers only from that
+  user-level file, so tell the user the project value now applies to every
+  repository they run Codex in, until the skill is re-run in another one.
+- **OpenCode:** `options.headers` on the gateway provider in the repo's
+  `opencode.json`. OpenCode merges it with the provider defined globally.
+  If `git ls-files --error-unmatch opencode.json` succeeds the file is
+  committed: tell the user the change holds their personal machine id and
+  should stay out of the commit.
+
+On success it prints `{ "status": "written" | "unchanged", "file": … }`.
+A re-run with the same values is `unchanged`. A run naming a different
+gateway replaces the old carrier rather than adding a second one.
+
+Exit code 2 is a refusal, and nothing was written. Relay its stderr to the
+user as it is: it says what to fix. The refusals are OpenRouter (it has no
+carrier, so recommend running the collector for that agent), a Codex
+built-in provider (`openai`, `ollama`, `lmstudio` can't carry headers), a
+`cf-aig-metadata` that would pass Cloudflare's five-entry limit, `otlp` for
+Codex or OpenCode (their config has no place for it, so the user sets
+`OTEL_RESOURCE_ATTRIBUTES` in the exporter's environment), and a config file
+the script can't safely rewrite. Exit code 1 means you passed bad arguments.
+
+The script only adds Miranda's values. It never sets `ANTHROPIC_BASE_URL`,
+a `base_url` or `baseURL`, or any credential: pointing the agent at the
+gateway is the user's job. The work item still comes from
+`tag_session_work_item`, as `USING-MIRANDA.md` says.
+
+### 7. Register this repository as a project
+
+Run this after step 6, whichever enrolment path ran — and also when steps 2–6
 had nothing to do. Do it **without asking**: the developer is setting up
 tracking for exactly this repository, and registering it is the only way its
 spend stops landing in Unassigned. Use the `miranda` MCP tools only.
@@ -298,7 +409,7 @@ spend stops landing in Unassigned. Use the `miranda` MCP tools only.
    transcript, a tool argument or the report. Use `origin` and nothing else —
    it is the only remote the collector reads. If this isn't a git repository,
    or the command prints nothing on stdout (no `origin` remote — git's
-   `error: No such remote` goes to stderr), skip the rest of step 6 and say
+   `error: No such remote` goes to stderr), skip the rest of step 7 and say
    why in the report (e.g. "this repository has no `origin` remote, so there
    is no URL a project could match").
 
@@ -364,7 +475,7 @@ spend stops landing in Unassigned. Use the `miranda` MCP tools only.
    repositories are one product, and attaching moves spend between projects.
    Never call `attach_project_repository` yourself.
 
-5. **Report what happened** in step 7, from the result's `project` and
+5. **Report what happened** in step 8, from the result's `project` and
    `backfill`:
    - the `slug` it registered under (and the name, when it isn't the same as
      the slug);
@@ -400,24 +511,29 @@ dropped connection, a timeout), retry it once. If it still fails, or the
 `miranda` MCP server isn't connected, or the call returns an error — say so,
 with the error, and carry on to the report. It doesn't undo the file edits or the enrolment.
 
-### 7. Report
+### 8. Report
 
 Summarize what changed (files created/updated, section inserted where,
-usage tracking configured or already present, the project registered or
-matched — or why the step was skipped — with what step 6 moved) and suggest
-committing the changes, e.g. `chore: wire miranda agent doc into instruction
-files`.
+usage tracking configured or already present, each gateway carrier written,
+unchanged or refused and why, the project registered or matched — or why
+the step was skipped — with what step 7 moved) and suggest committing the
+changes, e.g. `chore: wire miranda agent doc into instruction files`. Leave
+`.claude/settings.local.json`, the Codex config and any `opencode.json`
+carrier change out of that commit: they hold this machine's id.
 
 ## Idempotency rules
 
 - Re-running with identical content is a no-op; say "already current".
 - Re-running in a repository that is already a project registers nothing:
-  step 6 finds the match and names it.
+  step 7 finds the match and names it.
+- Re-running the carrier write with the same gateway is a no-op
+  (`unchanged`); with a different gateway it replaces the carrier.
 - Marker blocks are always replaced in place, never duplicated. If a file
   somehow contains multiple marker blocks, replace the first and remove the
   rest, and mention it.
 - Never touch anything outside the marker block in an instruction file, and
-  never edit any other file.
+  never edit any other file — except the agent config files step 6 writes,
+  and only through the script.
 - Never re-mint a usage-tracking credential when step 1 found a `config.json`
   in either location (including the pre-rename `~/.gloria/config.json`). Offer
   to add `machineLabel` or rotate only if the user asks.
