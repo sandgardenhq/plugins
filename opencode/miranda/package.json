@@ -1,6 +1,6 @@
 {
   "name": "@sandgarden/miranda",
-  "version": "0.1.98",
+  "version": "0.1.99",
   "type": "module",
   "description": "Miranda OpenCode plugin — token-usage tracking skill + the gloria.dev MCP server's scoped /miranda tools.",
   "main": "index.js",
