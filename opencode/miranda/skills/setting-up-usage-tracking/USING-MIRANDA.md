@@ -36,7 +36,9 @@ you are confident in. Work down this list and stop at the first hit:
 2. an issue named earlier in this conversation as the thing being worked on;
 3. an issue number in the current branch name (`feature/foo-123`, `123-foo`,
    `issue-123`) — the usual case in Conductor-style setups, where each
-   workspace and branch is scoped to one issue;
+   workspace and branch is scoped to one issue. A leading Conductor
+   workspace prefix (`w-NNN/`) is the workspace's number, not an issue:
+   `w-424/issue-813` means #813, and `w-486/elt-flow-status` names no issue;
 4. the issue closed by an open PR for the current branch
    (`gh pr view --json closingIssuesReferences`) — only worth the round-trip
    when 1-3 found nothing.

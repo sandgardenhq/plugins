@@ -1,6 +1,6 @@
 {
   "name": "gloria",
-  "version": "0.3.104",
+  "version": "0.3.106",
   "description": "Discover and document a codebase's service dependencies, then register and monitor them via the gloria.dev MCP server.",
   "author": {
     "name": "Britt Crawford",
