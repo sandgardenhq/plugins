@@ -1,18 +1,19 @@
 <h1 align="center">Sandgarden plugins</h1>
 
 <p align="center">
-  <strong>gloria.dev, Miranda, and Doc Holiday for your coding agent — from one marketplace.</strong>
+  <strong>gloria.dev, Miranda, Doc Holiday, and Featurette for your coding agent — from one marketplace.</strong>
 </p>
 
 ---
 
-This is the plugin marketplace for **[Sandgarden](https://sandgarden.com)**'s products. One repo serves multiple coding agents — [Claude Code](https://code.claude.com/docs/en/plugins), [OpenAI Codex](https://learn.chatgpt.com/docs/plugins), [OpenCode](https://opencode.ai), and [Cursor](https://cursor.com) — and three plugins, each installable on its own:
+This is the plugin marketplace for **[Sandgarden](https://sandgarden.com)**'s products. One repo serves multiple coding agents — [Claude Code](https://code.claude.com/docs/en/plugins), [OpenAI Codex](https://learn.chatgpt.com/docs/plugins), [OpenCode](https://opencode.ai), and [Cursor](https://cursor.com) — and four plugins, each installable on its own:
 
 | Plugin            | Product                                                                                                                                     |
 | ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
 | **`gloria`**      | [gloria.dev](https://gloria.dev) — keeps an agent-written codebase aligned with intent: dependency monitoring, skills, standards, and more. |
 | **`miranda`**     | [Miranda](https://miranda.co) — tracks coding-agent token cost and attributes it to the GitHub issue the work was for.                      |
 | **`doc-holiday`** | [Doc Holiday](https://doc.holiday) — plans, generates, and maintains your docs from the code that is the source of truth.                   |
+| **`featurette`**  | [Featurette](https://featurette.ai) — turns your website into videos of any kind and personalizes them per recipient.                       |
 
 This repo also hosts the **Miranda usage collector**: its GitHub [Releases](https://github.com/sandgardenhq/plugins/releases), its signed self-update manifest, and its standalone installer — see [Install the collector without a coding agent](#install-the-collector-without-a-coding-agent).
 
@@ -29,9 +30,10 @@ Pick your agent, then install whichever plugins you want. Each command below is 
 /plugin install gloria@sandgarden
 /plugin install miranda@sandgarden
 /plugin install doc-holiday@sandgarden
+/plugin install featurette@sandgarden
 ```
 
-The first command registers this marketplace; each `install` adds one plugin. If the install summary says `Run /reload-plugins to activate.`, run that. The first MCP call — or `/mcp` — opens a one-time browser sign-in.
+The first command registers this marketplace; each `install` adds one plugin. If the install summary says `Run /reload-plugins to activate.`, run that. The first MCP call — or `/mcp` — opens a one-time browser sign-in. `featurette` signs in differently: it asks for a Featurette API key when enabled (see [its section](#the-featurette-plugin)).
 
 ### OpenAI Codex
 
@@ -42,7 +44,7 @@ codex plugin marketplace add sandgardenhq/plugins   # in your shell
 Then, inside Codex, run `/plugins`, install the plugins you want, and start a new session — a plugin's skills and tools load at session start. Finally, complete the one-time OAuth handshake for each plugin's MCP server:
 
 ```bash
-codex mcp login gloria        # in your shell — and/or miranda, doc-holiday
+codex mcp login gloria        # in your shell — and/or miranda, doc-holiday (featurette takes a key instead, see below)
 ```
 
 Install from the Codex CLI or the ChatGPT desktop app. [Codex's IDE extension does not support plugins.](https://learn.chatgpt.com/docs/plugins)
@@ -88,7 +90,7 @@ This repo ships a real Cursor plugin (`.cursor-plugin/`) for each product, bundl
 ```bash
 git -C ~/.cursor/plugins/sources/sandgarden pull || git clone https://github.com/sandgardenhq/plugins.git ~/.cursor/plugins/sources/sandgarden
 mkdir -p ~/.cursor/plugins/local
-for plugin in gloria miranda doc-holiday; do   # keep only the ones you want
+for plugin in gloria miranda doc-holiday featurette; do   # keep only the ones you want
   rm -rf ~/.cursor/plugins/local/$plugin
   cp -R ~/.cursor/plugins/sources/sandgarden/plugins/$plugin ~/.cursor/plugins/local/$plugin
 done
@@ -171,6 +173,23 @@ Doc Holiday turns your codebase into a documentation site and keeps it current. 
 | **`capturing-documentation-screenshots`** | Drives a browser to capture real product-UI screenshots for docs pages, crops out chrome/PII, and wires them in — plus exact capture instructions for shots (terminal, IDE, native dialogs) it can't take itself. |
 
 The plugin registers the remote **gloria.dev MCP server** at `https://mcp.gloria.dev/mcp` (Streamable HTTP) under the name **doc-holiday**. The server is OAuth-protected; the first request triggers a one-time browser sign-in.
+
+## The `featurette` plugin
+
+Featurette turns your website into videos of any kind: onboarding, support, product release, demo, commercial, personalized outreach. The plugin gives your agent the Featurette MCP server's tools (start a video of a site, follow the job, steer the director, share, unlock, personalize per recipient) and one skill:
+
+| Skill            | What it does                                                                                                                                              |
+| ---------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **`featurette`** | How a video's life reads — job → project → the director's last message → adjust → share/unlock → variants — with the tool reference. A copy of the live <https://featurette.ai/skill.md>. |
+
+The plugin registers the remote **Featurette MCP server** at `https://featurette.ai/mcp` (Streamable HTTP) under the name **featurette**. Unlike the gloria.dev server it is not OAuth-protected: it takes an **API key**, minted on <https://featurette.ai/api-keys> by a member of your org, as the Bearer credential. The key is the org's identity — every project, job and video it touches, and every credit it spends, is the org's.
+
+- **Claude Code** asks for the key when the plugin is enabled and keeps it in secure storage.
+- **Codex** reads it from the `FEATURETTE_API_KEY` environment variable (`bearer_token_env_var`).
+- **Cursor** reads `FEATURETTE_API_KEY` from the environment too (`${env:…}` in the plugin's `.mcp-cursor.json`).
+- **claude.ai / Claude desktop / Cowork**: Customize > Plugins > Add > *Add marketplace* `sandgardenhq/plugins`, add **Featurette**, then on the plugin's **Connectors** tab add the `featurette` connector with the request header `Authorization` = `Bearer <key>`.
+
+The plugin sends your requests (site URLs, prompts, recipient fields passed to a variant) to featurette.ai under your key and answers with job states, the director's last message and links to the rendered videos. There is no OpenCode package for `featurette`.
 
 ## The usage collector
 
@@ -303,7 +322,8 @@ Collector** from Settings → Apps.
 - gloria.dev — <https://gloria.dev>
 - Miranda — <https://miranda.co>
 - Doc Holiday — <https://doc.holiday>
-- MCP server — <https://mcp.gloria.dev/mcp> (gloria, doc-holiday) · <https://mcp.gloria.dev/miranda> (miranda)
+- Featurette — <https://featurette.ai>
+- MCP server — <https://mcp.gloria.dev/mcp> (gloria, doc-holiday) · <https://mcp.gloria.dev/miranda> (miranda) · <https://featurette.ai/mcp> (featurette)
 
 ---
 

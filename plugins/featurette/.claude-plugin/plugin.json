@@ -1,0 +1,34 @@
+{
+  "name": "featurette",
+  "displayName": "Featurette",
+  "version": "0.1.0",
+  "description": "Turn your website into videos of any kind (onboarding, support, product release, outreach), steer the director, and personalize per recipient through Featurette's MCP server.",
+  "author": {
+    "name": "Sandgarden, Inc.",
+    "email": "gloria@sandgarden.com"
+  },
+  "homepage": "https://featurette.ai",
+  "repository": "https://github.com/sandgardenhq/plugins",
+  "license": "MIT",
+  "keywords": [
+    "video",
+    "demo",
+    "guide",
+    "personalization",
+    "outreach"
+  ],
+  "documentationUrl": "https://featurette.ai/skill.md",
+  "supportUrl": "https://featurette.ai",
+  "privacyPolicyUrl": "https://featurette.ai/privacy",
+  "termsOfServiceUrl": "https://featurette.ai/terms",
+  "mcpServers": "./.mcp.json",
+  "userConfig": {
+    "api_key": {
+      "type": "string",
+      "title": "Featurette API key",
+      "description": "Minted on https://featurette.ai/api-keys by a member of your org; sent as the Bearer credential to featurette.ai/mcp.",
+      "sensitive": true,
+      "required": true
+    }
+  }
+}

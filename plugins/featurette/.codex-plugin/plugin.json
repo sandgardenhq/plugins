@@ -1,0 +1,29 @@
+{
+  "name": "featurette",
+  "version": "0.1.0",
+  "description": "Turn your website into videos of any kind (onboarding, support, product release, outreach), steer the director, and personalize per recipient through Featurette's MCP server.",
+  "author": {
+    "name": "Sandgarden, Inc.",
+    "email": "gloria@sandgarden.com"
+  },
+  "homepage": "https://featurette.ai",
+  "repository": "https://github.com/sandgardenhq/plugins",
+  "license": "MIT",
+  "keywords": [
+    "video",
+    "demo",
+    "guide",
+    "personalization",
+    "outreach"
+  ],
+  "skills": "./skills/",
+  "mcpServers": "./.mcp-codex.json",
+  "interface": {
+    "displayName": "Featurette",
+    "shortDescription": "Videos of your website, personalized per recipient",
+    "longDescription": "Turn your website into videos of any kind \u2014 onboarding, support, product release, outreach \u2014 steer Featurette's director, share and unlock renders, and personalize a finished video per recipient through the featurette.ai MCP server.",
+    "developerName": "Sandgarden, Inc.",
+    "category": "Productivity",
+    "websiteURL": "https://featurette.ai"
+  }
+}

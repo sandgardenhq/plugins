@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "featurette": {
+      "url": "https://featurette.ai/mcp",
+      "bearer_token_env_var": "FEATURETTE_API_KEY"
+    }
+  }
+}

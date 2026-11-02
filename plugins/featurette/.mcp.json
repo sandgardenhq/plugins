@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "featurette": {
+      "type": "http",
+      "url": "https://featurette.ai/mcp",
+      "headers": {
+        "Authorization": "Bearer ${user_config.api_key}"
+      }
+    }
+  }
+}
