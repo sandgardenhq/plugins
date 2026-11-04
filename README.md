@@ -254,6 +254,12 @@ miranda-collector daemon uninstall   # unregister it
 Removing a plugin from your coding agent does not stop the collector: it
 runs as a background service of its own. To remove it from a machine:
 
+**Installed from the macOS `.pkg`?** Open **Miranda Uninstaller** in
+`/Applications`. It asks you to confirm, offers to keep your settings for a
+reinstall, asks once for an administrator password, and then does steps 2
+and 3 below for you, in the right order. It also removes itself. You still
+need to do steps 1 and 4.
+
 1. **Remove the `gloria` and `miranda` plugins** from each coding agent they
    are installed in — both ship the same collector. While either is installed,
    its hooks download the collector again at the next session.
@@ -278,7 +284,8 @@ runs as a background service of its own. To remove it from a machine:
    every path it removed; running it again reports nothing to remove.
 
 3. **If the `.pkg` was installed** (fleet/MDM — the command above says so when
-   it finds one), remove it as an administrator:
+   it finds one), and you didn't use Miranda Uninstaller, remove it as an
+   administrator:
 
    ```sh
    sudo miranda-collector uninstall --system
@@ -286,8 +293,9 @@ runs as a background service of its own. To remove it from a machine:
 
    That stops `co.miranda.collector.system` in every signed-in session and
    removes `/Library/LaunchAgents/co.miranda.collector.system.plist`,
-   `/usr/local/bin/miranda-collector`, `/usr/local/libexec/miranda-collector/`
-   and the `co.miranda.collector` package receipt. Run it after step 2 —
+   `/usr/local/bin/miranda-collector`, `/usr/local/libexec/miranda-collector/`,
+   `/Applications/Miranda Uninstaller.app` and the `co.miranda.collector`
+   package receipt. Run it after step 2 —
    it deletes the `miranda-collector` command that step uses.
 
 4. **Revoke the machine's ingest key.** Deleting `config.json` does not
