@@ -180,16 +180,16 @@ There is nothing to install: the first hook fire downloads a compiled collector 
 
 **What it reports:** token usage per model request (model, token counts, timestamps, session and request ids), a random per-machine identifier, and this machine's **hostname, operating system, and architecture**, so you can tell your machines apart in the dashboard. Work-item cost attribution additionally reads your session's own `git remote` to resolve which project it belongs to. To extract those numbers it reads your local session files (which contain conversation content), but it never transmits message content, prompts, or code, and, unless workflow events are on (below), no file paths.
 
-**Workflow events — off by default.** Your organization admin can turn workflow collection on for the whole organization in Miranda's settings; until they do, the collector reports token usage exactly as described here and nothing more. When it is on, the collector also reports the **structure, not content**, of each session it already reads: sizes, names, and flags, never a prompt, a reply, a file body, a tool's output, or a full shell command (only its first word and its class). These are the event kinds:
+**Workflow events — off by default.** Your organization admin can turn workflow collection on for the whole organization in Miranda's settings; until they do, the collector reports token usage exactly as described here and nothing more. When it is on, the collector also reports the **structure of each session, not the conversation**, for every session it already reads: sizes, names, and flags. Prompts, replies and tool output never leave your machine. Shell commands are sent with secrets and home-directory paths removed, and agent instruction files such as CLAUDE.md with secrets removed; the working directory is sent as a path. These are the event kinds:
 
-- `session_start`: branch, repository, entrypoint; the directory as a hash
+- `session_start`: branch, repository, entrypoint, and the working directory's path
 - `session_end`: why it ended and how long it ran
 - `human_turn`: prompt size and slash-command name, never the prompt
 - `assistant_turn`: model, effort, stop reason and size, never the reply
 - `model_request`: the token counts already reported today
-- `tool_call`: tool name, argument names, repo-relative file path, and a shell command's first word only, plus the names of any wrappers a hook added to it before it ran (such as `rtk`)
+- `tool_call`: tool name, argument names, repo-relative file path, and a shell command with secrets and home-directory paths removed, plus the names of any wrappers a hook added to it before it ran (such as `rtk`); for a web tool, the host and URL path, never the query string
 - `tool_result`: error flag, size, exit code and test counts, never the output
-- `project_facts`: manifest and instruction file names, sizes and hashes, and the MCP server names the repo's agent config files declare
+- `project_facts`: manifest and instruction file names, sizes and hashes, each instruction file's contents, with secrets removed, and the MCP server names the repo's agent config files declare
 - `skill_invoked`: skill name and whether it came from a plugin, the project, or the user
 - `subagent_spawned`: subagent type, model override and whether it ran in the background, never its prompt
 - `plan_mode`: entering or leaving plan mode, never the plan
