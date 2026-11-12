@@ -12,7 +12,7 @@
       "name": "gloria",
       "source": "./plugins/gloria",
       "description": "Document a codebase's service dependencies and connect to the gloria.dev MCP server for health-check registration and status.",
-      "version": "0.3.127"
+      "version": "0.3.128"
     },
     {
       "name": "miranda",

@@ -10,9 +10,10 @@ description: Use to investigate production problems through gloria's log debuggi
 When the user asks **why something is failing in production**, **what happened at
 a given time**, or to **check/debug the logs**, that is this skill, driven by the
 gloria MCP log tools — not guesswork from the code alone. The tools query the
-org's own log provider (e.g. AWS CloudWatch, Cloudflare Workers, or Google
-Cloud Logging) live with a
-stored read-only credential; gloria stores no log data, and neither should you
+org's own log provider (e.g. AWS CloudWatch, Cloudflare Workers, Google
+Cloud Logging, or Vercel) live with a
+stored least-privilege credential (read-only where the provider offers it; a
+project-scoped token on Vercel, which has no read-only scope); gloria stores no log data, and neither should you
 assume any history beyond what a query returns.
 
 ## Overview
@@ -46,8 +47,9 @@ conversation**; credentials are dashboard-only by design.
 
 When configured, note the connections (name, location, services, lastVerifiedAt) —
 `location` is the AWS region for a CloudWatch connection, the account id for a
-Cloudflare Workers connection, or the GCP project id for a Google Cloud Logging
-connection. A project may aggregate several accounts, and
+Cloudflare Workers connection, the GCP project id for a Google Cloud Logging
+connection, or the team id for a Vercel connection. A project may aggregate
+several accounts, and
 the query tools already fan out across all of them — you never pick a
 connection.
 
@@ -57,6 +59,16 @@ Turn the symptom into a time window and candidate services. Call
 `get_log_stats` (Unix-ms window; start with the last hour) and look for the
 spike: which service, which severity, starting when. Flat? Widen the window or
 drop the service filter.
+
+Vercel keeps runtime logs briefly (1 hour on Hobby, 1 day on Pro, 3 days on
+Enterprise, longer with Observability Plus). Results that reach past a
+provider's retention are flagged — `window_beyond_retention` when nothing in
+the window was searchable, `incompleteWindow: true` when only part was — and
+either means **missing data, not "no errors"**: move `fromTs` forward and say
+the earlier part of the window couldn't be checked. When `get_log_stats` adds a
+notes block with `truncated: true`, the buckets came from a capped
+newest-first sample, so the oldest buckets under-count — don't read a spike
+start off them; narrow the window instead.
 
 ### Step 2 — Identify the failure
 
@@ -68,7 +80,8 @@ sight. Two signals matter most:
 - **first seen ≈ spike start** — the group that appears when the spike starts is
   your lead suspect.
 - **`serviceVersion` changed at onset** — a version change at spike onset is the
-  deploy-correlation signal: name the deploy in your answer.
+  deploy-correlation signal: name the deploy in your answer. On Vercel, a line
+  that doesn't log its own version carries its deployment id (`dpl_…`) here.
 
 Check `unstructuredLines`: when it is high, the project logs plain text and
 grouping under-reports — say so, and fall back to `query_logs` with `contains`
@@ -97,13 +110,18 @@ and the exact code location — then offer the fix as a next step.
 
 ## Degradation playbook
 
-| Signal                                                    | Response                                                                                                                                                       |
-| --------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `query_timeout` or `rate_limited`                         | Narrow the time window (or add a service filter) and retry once                                                                                                |
-| `truncated: true`                                         | Narrow the window / raise `minSeverity` — do not page                                                                                                          |
-| High `unstructuredLines`                                  | Say grouping under-reports; fall back to `query_logs` + `contains`                                                                                             |
-| `connectionErrors` in an ok result                        | Report it by name ("the staging connection's credential was rejected — re-enter it on the Logs settings page") alongside the findings from healthy connections |
-| `not_configured` / `credential_invalid` on the whole tool | Route to the project's Logs settings page; never ask for keys in chat                                                                                          |
+| Signal                                                          | Response                                                                                                                                                       |
+| --------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `query_timeout` or `rate_limited`                               | Narrow the time window (or add a service filter) and retry once                                                                                                |
+| `truncated: true`                                               | Narrow the window / raise `minSeverity` — do not page                                                                                                          |
+| High `unstructuredLines`                                        | Say grouping under-reports; fall back to `query_logs` + `contains`                                                                                             |
+| `connectionErrors` in an ok result                              | Report it by name ("the staging connection's credential was rejected — re-enter it on the Logs settings page") alongside the findings from healthy connections |
+| `not_configured` / `credential_invalid` on the whole tool       | Route to the project's Logs settings page; never ask for keys in chat                                                                                          |
+| `window_beyond_retention` (whole tool or in `connectionErrors`) | No data, not "no errors": move `fromTs` forward and say the older window couldn't be checked                                                                   |
+| `incompleteWindow: true`                                        | Results are real but cover less time than asked — say which part couldn't be checked                                                                           |
+| `truncated: true` in `get_log_stats` notes                      | Buckets are a newest-first sample; narrow the window before reading the spike start                                                                            |
+| `resource_not_found` (whole tool or in `connectionErrors`)      | A mapped resource (e.g. a Vercel project id) is wrong or invisible to the token — fix the mapping on the Logs settings page; the credential itself is fine     |
+| `contains` on a Vercel connection finds nothing                 | Vercel matches whole words: search `TimeoutError`, not `Timeout`, or use `attribute:{key,value}`                                                               |
 
 ## Security
 
