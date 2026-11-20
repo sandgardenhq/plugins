@@ -303,8 +303,18 @@ need to do steps 1 and 4.
    **Account → Collector keys**.
 
 Homebrew installs are removed with `brew services stop miranda-collector`
-and `brew uninstall miranda-collector`. On Windows, remove **Miranda
-Collector** from Settings → Apps.
+and `brew uninstall miranda-collector`.
+
+**On Windows**, remove **Miranda Collector** from Settings → Apps (or
+`msiexec /x`). Along with the program and its scheduled task, that removes
+the collector's state for the account doing the uninstall —
+`%USERPROFILE%\.config\sandgarden` (`config.json` included) and a legacy
+`%USERPROFILE%\.gloria` — so a reinstall prompts to connect again. Upgrading
+to a newer MSI keeps it. Any other account on the PC that used Miranda keeps
+its own state: remove those two directories in it. A fleet tool that removes
+the MSI as SYSTEM (Intune, SCCM) removes no account's state; the uninstall's
+log (`msiexec /x … /l*v`) lists the directories still on the PC. You still
+need to do steps 1 and 4.
 
 ## Links
 
