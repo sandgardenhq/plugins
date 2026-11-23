@@ -69,7 +69,7 @@ In the investigation folder, write the write-up with these sections:
 - **Evidence** — links to the files under `evidence/`, with a one-line note
   on what each shows.
 - **Root Cause** — the named file/line responsible, from mapping the stack
-  trace to source (and the project's Feature Map, when registered).
+  trace to source (and the repo's `FEATURES.md`, when it has one).
 - **Deploy Correlation** — the deploy/version implicated, if `serviceVersion`
   changed at spike onset; omit this section if there's no correlation.
 - **Fix Recommendation** — the proposed fix as a next step, not applied here.

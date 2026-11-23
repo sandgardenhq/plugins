@@ -103,8 +103,8 @@ reports each connection's `attributeFilter` capability.
 
 ### Step 4 — Map to source and answer
 
-Hand the stack trace to the codebase (and the project's Feature Map, when
-registered) to name the file and line. Answer with: what failed (the group),
+Hand the stack trace to the codebase (and the repo's `FEATURES.md`, when it
+has one) to name the file and line. Answer with: what failed (the group),
 when it started (bucket time), the likely cause (deploy/version if correlated),
 and the exact code location — then offer the fix as a next step.
 
