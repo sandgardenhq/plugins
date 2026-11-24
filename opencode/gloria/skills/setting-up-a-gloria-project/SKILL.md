@@ -1,13 +1,13 @@
 ---
 name: setting-up-a-gloria-project
-description: Use when setting up a new project with Gloria - a new or empty repo, or one whose CLAUDE.md or AGENTS.md is missing or thin, where the user wants Gloria too ("set up this project with gloria", "start a new gloria project") - surveys the repo, interviews the user, and authors CLAUDE.md plus an AGENTS.md tuned for Codex CLI, OpenCode, and Cursor, covering project purpose, tech stack, commands, TDD rules, and development practices, then offers to wire Gloria in with `setting-up-gloria`. For a plain setup without Gloria, use `project-foundations:setting-up-a-project`. Distinct from `setting-up-gloria`, which wires Gloria into a project that's already set up.
+description: Use when setting up a new project with Gloria - a new or empty repo, or one whose CLAUDE.md or AGENTS.md is missing or thin, where the user wants Gloria too ("set up this project with gloria", "start a new gloria project") - surveys the repo, interviews the user, and authors CLAUDE.md plus an AGENTS.md tuned for Codex CLI, OpenCode, and Cursor, covering project purpose, tech stack, commands, TDD rules, and development practices, then runs every Gloria setup step (wiring, dependency sync, coding standards, skills). For a plain setup without Gloria, use `project-foundations:setting-up-a-project`. Distinct from `setting-up-gloria`, which wires Gloria into a project that's already set up.
 ---
 
 # Setting up a Gloria Project
 
 ## Overview
 
-Author the instruction files that define a project's purpose, commands, and development practices before writing code: `CLAUDE.md` for Claude Code, `AGENTS.md` for Codex CLI, OpenCode, and Cursor, plus the rule files both of them lean on.
+Author the instruction files that define a project's purpose, commands, and development practices before writing code: `CLAUDE.md` for Claude Code, `AGENTS.md` for Codex CLI, OpenCode, and Cursor, plus the rule files both of them lean on. Then run every Gloria setup step on the project, so it leaves with Gloria fully configured.
 
 **Core principle:** A well-configured project prevents rework and ensures consistency. Establishing guardrails upfront helps Claude Code work reliably, produce high-quality code, and avoid doom loops where code is written, broken, and rewritten repeatedly.
 
@@ -350,7 +350,7 @@ In `AGENTS.md` it is already covered by the Required Reading list - no `@` line 
 
 ### 9. Verify, Then Finish
 
-Documentation that does not run is worse than none. Before the final commit:
+Documentation that does not run is worse than none. Before this step's commit:
 
 1. **Run every command in the Commands section.** Fix any that fail or do not exist.
 2. **Check for unfilled placeholders:** `grep -n '{{' CLAUDE.md AGENTS.md TDD.rules.md` must return nothing.
@@ -361,12 +361,43 @@ Documentation that does not run is worse than none. Before the final commit:
 7. Use the `elements-of-style:writing-clearly-and-concisely` skill if available.
 8. Commit.
 
-### 10. Hand Off to the Gloria Setup
+### 10. Run the Gloria Setup Phase
 
-CLAUDE.md and AGENTS.md both exist now, so this is the point to wire the project into [Gloria](https://gloria.dev).
+CLAUDE.md and AGENTS.md are written and committed, so now wire the project fully into [Gloria](https://gloria.dev). Run every step below, in this order. Each step invokes an existing gloria skill, keeps that skill's consent gates, and commits its repo-side output before the next step starts. The phase's own steps are numbered 10.1-10.6, so they can't be confused with steps 1-9 above.
 
-- Ask if the user wants to wire this project into Gloria now too - dependency monitoring, coding standards, shared skills. If yes, invoke the `setting-up-gloria` skill. It appends its Gloria section to both CLAUDE.md and AGENTS.md. If that skill isn't installed, say so and continue - this step is optional, not a blocker.
-- Whether `setting-up-gloria` ran, was declined, or wasn't available, mention that `documenting-service-dependencies` (dependency inventory + health checks) and `extracting-coding-standards` (Coding Standards registration) are natural next steps once the project has real code - no need to run them now.
+**Track each phase step as a todo**, alongside the todos from steps 1-9.
+
+**Check sign-in first.** Call the `gloria` MCP tool `get_info`:
+
+- It fails because the server is unreachable or you aren't authenticated: follow "Signed out" under the phase rules below.
+- It returns an error saying there is no active org, or that your role can't read the org: show the user that error, then follow "Signed out" but give them the error instead of the sign-in instruction. Signing in again won't fix it.
+
+1. **Wire Gloria in (10.1)** - invoke `setting-up-gloria`. It copies `.gloria/USING-GLORIA.md`, adds the Gloria section to CLAUDE.md and AGENTS.md, and resolves the project or registers it with `register_project`. Commit: `chore: wire gloria into the instruction files`.
+2. **Refresh the project description and explainer (10.2)** - invoke `documenting-service-dependencies` for a **whole-repo pass**, not a single-dependency touch-up. In its "Describe" step, propose a new `description` even when one already exists. Its consent rule decides whether the new one replaces it. The whole-repo pass regenerates `PROJECT_EXPLAINER`, plus `PACKAGE_MAP` for a monorepo, and pushes them with `put_document`.
+3. **Map dependencies and sync them (10.3)** - in that same whole-repo pass, write the four dependency docs, call `put_dependency` for each dependency and `put_document` for each doc, then confirm with `list_dependencies`. Commit the four docs: `docs: map service dependencies`. 10.2 and 10.3 are one invocation, but track and report them separately.
+4. **Extract coding standards (10.4)** - invoke `extracting-coding-standards`. It runs `deriving-agent-code-style` and `mapping-packages-for-coding-agents`, registers the standard, rules, and snippets with per-item approval (`register_standard`, `put_rule`, `put_snippet`), and renders the stamped Coding Standards section into both CLAUDE.md and AGENTS.md. Commit: `docs: add the coding standards section`.
+5. **Check coding standards (10.5)** - invoke `checking-coding-standards` for a **full audit** against the standards 10.4 registered. It reports with `report_check_run` even when it finds nothing. Record the drift run id it returns. If 10.4 registered no standard (nothing to extract, or its approval was declined), skip 10.5 and record why: there is nothing to audit and no drift run. The audit only reads code, so it has nothing to commit.
+6. **Identify skills and author new ones (10.6)** - invoke `identifying-skills-for-a-project`. It inventories, recommends, and then reuses, copies, or authors the missing skills. With consent, it publishes them with `publish_skill` and offers an install. The gloria plugin's own skills, including the ones `.gloria/USING-GLORIA.md` names, are already covered, so don't recommend them as gaps. Look for what this project needs beyond them. Authoring a new skill needs `writing-skills`, a superpowers skill that the gloria plugin doesn't include. If `writing-skills` is unavailable, list each skill that would be authored with its rationale, and say what to install: the superpowers plugin. Commit only the project-local install paths the user chose to commit. Never commit the `.context/` staging directory, which a new repo doesn't ignore yet, so name the paths and never `git add -A`.
+
+Phase rules:
+
+- **Re-check the instruction files.** 10.1 and 10.4 edit CLAUDE.md and AGENTS.md after step 9 checked them. When the phase ends, re-run step 9's checks 2-6 on both files, fix anything they find, and commit the fix.
+- **One final report.** End the phase with a single report:
+  - each step's result;
+  - what was written to the repo;
+  - what was sent to gloria.dev: the project, N dependencies, N docs, the standard with N rules and N snippets, the drift run id, and the skills published or installed;
+  - what was skipped, and why.
+- **Signed out.** If the gloria MCP server is unavailable or not signed in, do only the repo-side work. That is 10.1's doc and Gloria sections and 10.3's four local dependency docs, each committed. Skip the rest: `PROJECT_EXPLAINER` and `PACKAGE_MAP` exist only on gloria.dev, and the Coding Standards stamp is the version of a registered standard. End the phase with the exact sign-in instruction for the user's agent:
+  - Claude Code: run `/mcp`, select `gloria`, and authenticate.
+  - Codex CLI: run `codex mcp login gloria` in your shell.
+  - OpenCode and Cursor: the first gloria tool call opens a one-time browser sign-in.
+
+  Say that 10.1-10.6 can be rerun once signed in. Give the final report, then go on to step 11. Never report a sync, registration, standard, drift run, or publish that didn't happen.
+
+- **Registration declined.** If the user declines to register the project in 10.1, treat 10.2-10.6 as signed out: every server write in them needs the project, and `documenting-service-dependencies` would otherwise register it without asking. Do their repo-side work only, and report the rest as skipped because registration was declined.
+- **A write is refused.** If the server refuses a write because of the user's role, record that step as skipped with the error, and continue. Don't retry it.
+- **Empty or near-empty codebase.** Still run every step. When a code-derived step finds nothing, record "nothing to extract yet" for it. Never make up dependencies, rules, snippets, or skills to fill a step. The final report says which steps to rerun once the project has code, usually 10.2-10.6.
+- **A declined consent gate skips that one step's write.** Record it as skipped with the reason, and continue with the next step.
 
 ### 11. Offer Next Steps
 
@@ -389,6 +420,8 @@ CLAUDE.md                 (Claude Code)
 ## CI/CD Practices        (only if GitHub Actions)
 ## Boundaries
 ## Verification           (read + @VERIFICATION_PLAN.md)
+## Gloria                 (step 10: setting-up-gloria)
+## Coding Standards       (step 10: extracting-coding-standards)
 ```
 
 ```text
@@ -406,9 +439,11 @@ AGENTS.md                 (Codex CLI, OpenCode, Cursor)
 ## CI/CD Practices        │
 ## Boundaries             ┘
 ## Maintaining This File  (change one, change both, same commit)
+## Gloria                 (step 10: setting-up-gloria)
+## Coding Standards       (step 10: extracting-coding-standards)
 ```
 
-Alongside them: `TDD.rules.md`, `CLAUDE-specific-fuckups.md`, `VERIFICATION_PLAN.md`, and optionally `.claude/settings.json`.
+Alongside them: `TDD.rules.md`, `CLAUDE-specific-fuckups.md`, `VERIFICATION_PLAN.md`, and optionally `.claude/settings.json`. Step 10 adds `.gloria/USING-GLORIA.md` and the four dependency docs.
 
 ## Key Principles
 
@@ -437,4 +472,4 @@ Alongside them: `TDD.rules.md`, `CLAUDE-specific-fuckups.md`, `VERIFICATION_PLAN
 
 ---
 
-Ported from [britt/agent-skills](https://github.com/britt/agent-skills/tree/a048db47b7c92d921e4f3ab7583eca530d645e3a/skills/setting-up-a-project) at `a048db47` (MIT License), adapted for gloria.dev: bundled files are never fetched from the network, and step 10 hands off to `setting-up-gloria`.
+Ported from [britt/agent-skills](https://github.com/britt/agent-skills/tree/a048db47b7c92d921e4f3ab7583eca530d645e3a/skills/setting-up-a-project) at `a048db47` (MIT License), adapted for gloria.dev: bundled files are never fetched from the network, and step 10 runs the full Gloria setup phase.
