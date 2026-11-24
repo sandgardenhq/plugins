@@ -1,6 +1,6 @@
 ---
 name: setting-up-gloria
-description: For a project that's already set up (has, or intentionally has no, its own CLAUDE.md/AGENTS.md) and just needs Gloria wired in — not for a brand-new project with no CLAUDE.md yet (use `setting-up-a-project` for that, which chains into this skill automatically at the end). Use when installing Gloria into a repo ("set up gloria", "install gloria in this project"), when a repo is missing .gloria/USING-GLORIA.md or the gloria section in CLAUDE.md/AGENTS.md, or after a gloria plugin update to refresh a stale doc — copies the canonical USING-GLORIA.md agent doc into the repo, wires an evergreen Gloria section into the agent instruction files (with the user's permission), and offers to register the project with gloria.dev. Idempotent; safe to re-run.
+description: For a project that's already set up (has, or intentionally has no, its own CLAUDE.md/AGENTS.md) and just needs Gloria wired in — not for a brand-new project with no CLAUDE.md yet (use `setting-up-a-gloria-project` for that, which chains into this skill automatically at the end). Use when installing Gloria into a repo ("set up gloria", "install gloria in this project"), when a repo is missing .gloria/USING-GLORIA.md or the gloria section in CLAUDE.md/AGENTS.md, or after a gloria plugin update to refresh a stale doc — copies the canonical USING-GLORIA.md agent doc into the repo, wires an evergreen Gloria section into the agent instruction files (with the user's permission), and offers to register the project with gloria.dev. Idempotent; safe to re-run.
 ---
 
 # Setting Up Gloria
@@ -25,7 +25,7 @@ This skill assumes the repo is already set up (or deliberately has no
 CLAUDE.md of its own) — it only ever inserts/updates the marked Gloria
 section inside existing instruction files, or creates a bare `AGENTS.md`
 holding just that section. For a brand-new, empty repo that needs a full
-CLAUDE.md authored from scratch, use `setting-up-a-project` instead — it
+CLAUDE.md authored from scratch, use `setting-up-a-gloria-project` instead — it
 runs the full interview and, as its last step, offers to run this skill
 automatically.
 
