@@ -44,15 +44,15 @@
 # now downloads the same release from "sandgardenhq/plugins" with the
 # "miranda-collector" prefix (#813). They stay placeholders rather than
 # literals so the release host can move without editing this file.
-BUILD_VERSION="17cfb2ae5938"
-RELEASE_TAG="collector-17cfb2ae5938"
+BUILD_VERSION="78c4b78b01a6"
+RELEASE_TAG="collector-78c4b78b01a6"
 RELEASE_REPO="sandgardenhq/plugins"
 ASSET_PREFIX="miranda-collector"
-CHECKSUM_DARWIN_ARM64="50391e5c10716a97ab0bfb691fdd2921e995186131efc9b034b5b1d51c9544d8"
-CHECKSUM_DARWIN_X64="710d9c7eddb1f1605946ecc16abfa7be55893e50151253ae205fb0ff24f0825d"
-CHECKSUM_LINUX_X64="ecb362f4c401b664e6779645704be6e84afce0c2733c183230f979f6cfcd4324"
-CHECKSUM_LINUX_ARM64="ee77a51f956ecba4ea009ce04586463d776f04c416608081d0a4a3f5aa6b5dda"
-CHECKSUM_WINDOWS_X64="7d75ad7633f2a4dbac4c6a2015eb3068507417013d0a2a97a563d36633a89c59"
+CHECKSUM_DARWIN_ARM64="3e1e3b7af03dac7878fb6e5f4a50bbfd84d97dbd67861c953604b376eac101ae"
+CHECKSUM_DARWIN_X64="9c4e30169d16537531470eddaf591a9b2a56e368267c40459a9ff99d50824484"
+CHECKSUM_LINUX_X64="e10e508198fbf4a6c0775e9b3dfe69eef9a9d26335c0881ed014ea4fea240229"
+CHECKSUM_LINUX_ARM64="623640636fa5fca0fcfd9c9fe57c0a3c26d637da43ffce09444b38954ae5f49c"
+CHECKSUM_WINDOWS_X64="c9d7167c656d086dcaafbb30c99178a12d9d080c13f949051dee2697b603d8cb"
 
 # A download lock older than this is a downloader that died mid-run: take it
 # over (mirrors the collector's sweep-lock staleness cutoff).
